@@ -1,7 +1,7 @@
 import { Request } from 'express';
 import jwt from 'jsonwebtoken';
-import { JWT_SECRET } from '../config/env.ts';
-import User from '../models/User.ts';
+import { JWT_SECRET } from '../config/env.js';
+import User from '../models/User.js';
 
 export interface Context {
   req: Request;
