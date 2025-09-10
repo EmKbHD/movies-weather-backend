@@ -10,7 +10,7 @@ export const resolvers = {
   //   ...userResolvers.Favorites,
   // },
   Mutation: {
-    ...userResolvers.Mutation,
+    // ...userResolvers.Mutation,
     // ...favoritesMoviesResolvers.Mutation,
   },
 };
