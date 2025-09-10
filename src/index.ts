@@ -1,5 +1,6 @@
-import { typeDefs, resolvers } from './graphql/index.js';
-import { createContext } from './graphql/context';
+import { resolvers } from './graphql/resolvers/index.js';
+import { typeDefs } from './graphql/schemas/index.js';
+import { createContext } from './graphql/context.js';
 // import { errorHandler } from './middleware/errorHandler';
 import cors from 'cors';
 import express from 'express';
@@ -17,7 +18,7 @@ const app = express();
 // Parse JSON bodies
 app.use(express.json());
 
-// define a graphql schema (docs : https://the-guild.dev/graphql/yoga-server/docs/integrations/integration-with-express)
+// Defining a graphql schema (docs : https://the-guild.dev/graphql/yoga-server/docs/integrations/integration-with-express)
 const yoga = createYoga({
   schema: createSchema({ typeDefs, resolvers }),
   context: createContext,
