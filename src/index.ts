@@ -1,16 +1,11 @@
 import { resolvers } from './graphql/resolvers/index.js';
 import { typeDefs } from './graphql/schemas/index.js';
 import { createContext } from './graphql/context.js';
-// import { errorHandler } from './middleware/errorHandler';
 import cors from 'cors';
 import express from 'express';
-import dotenv from 'dotenv';
 import { createSchema, createYoga } from 'graphql-yoga';
-import mongoose from 'mongoose';
-import { MONGODB_URI, PORT } from './config/env.js';
-
-// loading environment variables
-dotenv.config();
+import { PORT } from './config/env.js';
+import { connectDB } from './config/db.js';
 
 // create express app
 const app = express();
@@ -25,21 +20,21 @@ const yoga = createYoga({
 });
 
 // yoga middleware
-app.use('/graphql', yoga);
+app.use('/graphql', yoga.requestListener);
 
 //CORS Middleware allow the frontend to call the backend
 app.use(cors());
 
 // connect to database
-
-mongoose
-  .connect(MONGODB_URI as string)
-  .then(() => {
-    const port = PORT;
-    app.listen(port, () => {
-      console.log(`Connected to MongDB and Server is running on port ${port}`);
+const startServer = async () => {
+  try {
+    await connectDB(); // call your DB connection function
+    app.listen(PORT, () => {
+      console.log(`Server is running on port ${PORT}`);
     });
-  })
-  .catch((err) => {
-    console.error('Error:', err);
-  });
+  } catch (err: any) {
+    console.error('Failed to start server:', err.message);
+  }
+};
+
+startServer();
