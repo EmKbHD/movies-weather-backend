@@ -2,7 +2,7 @@ import mongoose, { Types } from 'mongoose';
 
 const { Schema, model } = mongoose;
 
-export interface Favorite extends Document {
+export interface IFavorite extends Document {
   title: string;
   year: string;
   poster: string;
@@ -10,7 +10,7 @@ export interface Favorite extends Document {
   movieId: string;
 }
 
-const favoriteSchema = new Schema<Favorite>(
+const favoriteSchema = new Schema<IFavorite>(
   {
     title: { type: String, required: true },
     year: { type: String, required: true },
@@ -21,5 +21,5 @@ const favoriteSchema = new Schema<Favorite>(
   { timestamps: true }
 );
 
-const Favorite = model('favorite', favoriteSchema);
+const Favorite = model<IFavorite>('favorite', favoriteSchema);
 export default Favorite;

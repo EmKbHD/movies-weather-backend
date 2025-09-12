@@ -1,4 +1,4 @@
-import mongoose, { Document, Schema } from 'mongoose';
+import mongoose, { Document, model, Schema } from 'mongoose';
 
 // Define the TypeScript interface for a User
 export interface IUser extends Document {
@@ -25,5 +25,5 @@ const userSchema = new Schema<IUser>(
 );
 
 // Export the model typed with IUser
-const User = mongoose.model<IUser>('User', userSchema);
+const User = model<IUser>('User', userSchema);
 export default User;

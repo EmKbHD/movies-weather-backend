@@ -9,8 +9,6 @@ export const userType = `
 
   type Query {
     me: User
-    searchMovies(query: String!, provider: String): [Movie!]!
-    favorites: [Movie!]!
   }
 
   input SignupInput {

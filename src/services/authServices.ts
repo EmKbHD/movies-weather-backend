@@ -25,9 +25,9 @@ export const generateToken = (userId: string): string => {
 /**
  * Verify a token. Returns decoded payload { id, iat, exp } or null if invalid.
  */
-export const verifyToken = (token: string): { id: string; iat?: number; exp?: number } | null => {
+export const verifyToken = (token: string) => {
   try {
-    return jwt.verify(token, JWT_SECRET as Secret) as { id: string; iat?: number; exp?: number };
+    return jwt.verify(token, JWT_SECRET as Secret);
   } catch {
     return null;
   }

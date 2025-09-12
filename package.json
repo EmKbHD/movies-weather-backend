@@ -7,7 +7,7 @@
   "scripts": {
     "start": "node src/index.ts",
     "build": "tsc",
-    "dev": "nodemon --watch src --exec ts-node src/index.ts",
+    "dev": "nodemon --watch src --exec tsx src/index.ts",
     "test": "echo \"Error: no test specified\" && exit 1",
     "lint": "eslint 'src/**/*.{ts,tsx}' --fix",
     "format": "prettier --write 'src/**/*.{ts,js,json,md}'"
@@ -21,7 +21,8 @@
     "graphql": "^16.11.0",
     "graphql-yoga": "^5.15.2",
     "jsonwebtoken": "^9.0.2",
-    "mongoose": "^8.18.0"
+    "mongoose": "^8.18.0",
+    "tsx": "^4.20.5"
   },
   "devDependencies": {
     "@types/bcryptjs": "^3.0.0",
