@@ -4,19 +4,22 @@ export const userType = `
     firstName: String!
     lastName: String!
     email: String!
-    city: String
+    city: String!
+    createdAt: String!
+    updatedAt: String!
   }
 
   type Query {
     me: User
+    getUserProfile: User!
   }
 
-  input SignupInput {
+  input SignUpInput {
     firstName: String!
     lastName: String!
     email: String!
-    password: String!
     city: String!
+    password: String!
   }
 
   input LogInInput {
@@ -24,14 +27,35 @@ export const userType = `
     password: String!
   }
 
+  input UpdateProfileInput {
+    firstName: String
+    lastName: String
+    city: String
+    currentPassword: String
+    newPassword: String
+  }
+
+  input ResetPasswordInput {
+    email: String!
+  }
+
   type AuthPayload {
     user: User!
     token: String!
   }
 
+  type SuccessResponse {
+    success: Boolean!
+    message: String!
+  }
+
   type Mutation {
-    signup(input: SignupInput!): AuthPayload!
-    login(input: LogInInput): AuthPayload!
+    signup(input: SignUpInput!): AuthPayload!
+    login(input: LogInInput!): AuthPayload!
     logout: Boolean!
+    updateProfile(input: UpdateProfileInput!): User!
+    resetPassword(input: ResetPasswordInput!): SuccessResponse!
+    verifyResetToken(token: String!): Boolean!
+    updatePassword(token: String!, newPassword: String!): SuccessResponse!
   }
 `;

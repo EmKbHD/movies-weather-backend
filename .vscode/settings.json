@@ -1,3 +1,13 @@
 {
-  "cSpell.words": ["omdb", "OMDB", "OPENWEATHER", "SENDGRID", "tmdb", "TMDB"]
+  "cSpell.words": [
+    "apikey",
+    "imdb",
+    "imdbID",
+    "omdb",
+    "OMDB",
+    "OPENWEATHER",
+    "SENDGRID",
+    "tmdb",
+    "TMDB"
+  ]
 }

@@ -8,6 +8,7 @@ type SignupInput = {
   firstName: string;
   lastName?: string;
   email: string;
+  city: string;
   password: string;
 };
 
@@ -40,9 +41,9 @@ export default {
   Mutation: {
     signup: async (_: unknown, { input }: { input: SignupInput }, ctx: GQLContext) => {
       try {
-        const { firstName, lastName, email, password } = input;
+        const { firstName, lastName, email, city, password } = input;
 
-        if (!firstName || !email || !password) {
+        if (!firstName || !email || !city || !password) {
           throw new GraphQLError('Missing required fields..');
         }
 
@@ -57,6 +58,7 @@ export default {
         const userDoc: IUser = new User({
           firstName,
           lastName,
+          city,
           email,
           password: hashed,
         });
