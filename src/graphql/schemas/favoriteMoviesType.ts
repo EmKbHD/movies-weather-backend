@@ -11,11 +11,11 @@ export const favoriteMoviesType = `
   }
 
   type Query {
-    getFavoriteMovies(userId: ID!): [FavoriteMovie!]!
+    getFavoriteMovies(email: String!): [FavoriteMovie!]!
   }
 
   type Mutation {
-    addFavoriteMovie(movieId: String!): Boolean!
-    removeFavoriteMovie(movieId: String!): Boolean!
+    addFavoriteMovie(email:String!, movieId: String!): User!
+    removeFavoriteMovie(email:String!, movieId: String!): User!
   }
 `;

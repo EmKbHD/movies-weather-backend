@@ -1,4 +1,3 @@
-import { Request } from 'express';
 import User, { IUser } from '../models/User.js';
 import { verifyToken } from '../services/authServices.js';
 import { YogaInitialContext } from 'graphql-yoga';
@@ -6,7 +5,8 @@ import { JwtPayload } from 'jsonwebtoken';
 
 export interface GQLContext {
   request: YogaInitialContext['request'];
-  user?: IUser;
+  // keep user small: only fields resolvers usually need
+  user?: { id: string; email: string };
   token?: string;
 }
 
@@ -19,29 +19,33 @@ export const createContext = async (context: YogaInitialContext): Promise<GQLCon
   const token = authHeader && authHeader.startsWith('Bearer ') ? authHeader.slice(7) : undefined;
 
   if (!token) {
-    return { request: context.request, token };
+    return { request: context.request, token: undefined };
   }
 
   try {
-    const payload = verifyToken(token) as JwtPayload;
+    // Centralized token verification (might throw on invalid token)
+    const payload = (await verifyToken(token)) as JwtPayload;
     if (!payload || !payload.id) {
       return { request: context.request, token };
     }
 
-    // Fetch the user from DB and exclude the password
-    const user = await User.findById(payload.id).select('-password').lean().exec();
+    // Fetch the user from DB and exclude the password .lean() returns a plain JS object instead of a Mongoose document
+    const userDoc = await User.findById(payload.id).select('-password').lean().exec();
 
-    if (!user) {
+    if (!userDoc) {
       return { request: context.request, token };
     }
 
+    // Ensure id is a string (ObjectId -> string)
+    const user = { id: userDoc._id.toString(), email: userDoc.email };
+
     return {
       request: context.request,
-      user: user as IUser,
+      user,
       token,
     };
   } catch (err) {
-    // invalid token -> proceed without user
+    // invalid token or verify error -> proceed without user (unauthenticated)
     return { request: context.request, token };
   }
 };

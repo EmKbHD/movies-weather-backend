@@ -7,10 +7,12 @@ export const userType = `
     city: String!
     createdAt: String!
     updatedAt: String!
+    favorites:[Movie!]
   }
 
   type Query {
     me: User
+    users: [User!]!
     getUserProfile: User!
   }
 

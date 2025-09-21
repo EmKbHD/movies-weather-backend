@@ -1,4 +1,6 @@
 import Favorite from '../../models/Favorite.js';
+import Movie from '../../models/Movie.js';
+import User, { IUser } from '../../models/User.js';
 import { verifyToken } from '../../services/authServices.js';
 import { GraphQLError } from 'graphql';
 import { JwtPayload } from 'jsonwebtoken';
@@ -15,6 +17,7 @@ interface MovieInput {
 }
 
 const favoriteMoviesResolvers = {
+  //QUERIES START HERE
   Query: {
     getFavoriteMovies: async (_: unknown, { userId }: { userId: string }, { token }: Context) => {
       try {
@@ -32,7 +35,11 @@ const favoriteMoviesResolvers = {
       }
     },
   },
+
+  //MUTATIONS START HERE
+
   Mutation: {
+    //ADD FAVORITE MOVIE
     addFavoriteMovie: async (
       _: unknown,
       { movieInput }: { movieInput: MovieInput },
@@ -71,6 +78,8 @@ const favoriteMoviesResolvers = {
         throw new GraphQLError('An error occurred');
       }
     },
+
+    //REMOVE FAVORITE MOVIE
     removeFavoriteMovie: async (
       _: unknown,
       { movieId }: { movieId: string },
