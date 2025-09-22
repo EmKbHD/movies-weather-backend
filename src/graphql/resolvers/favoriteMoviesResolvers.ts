@@ -1,17 +1,13 @@
 import Favorite from '../../models/Favorite.js';
-import Movie from '../../models/Movie.js';
-import User, { IUser } from '../../models/User.js';
-import { verifyToken } from '../../services/authServices.js';
 import { GraphQLError } from 'graphql';
-import { JwtPayload } from 'jsonwebtoken';
-
-interface Context {
-  token?: string;
-}
-
+import { GQLContext as Context } from '../context.js';
 interface MovieInput {
   title: string;
   year: string;
+  actors: string;
+  genre: string;
+  type: string;
+  duration: string;
   poster: string;
   movieId: string;
 }
@@ -19,19 +15,20 @@ interface MovieInput {
 const favoriteMoviesResolvers = {
   //QUERIES START HERE
   Query: {
-    getFavoriteMovies: async (_: unknown, { userId }: { userId: string }, { token }: Context) => {
-      try {
-        const decoded = token ? (verifyToken(token) as JwtPayload) : null;
-        if (!decoded) {
-          throw new GraphQLError('User not authenticated');
-        }
+    // Fetch favorites movies for the authenticated user (no token needed in args)
+    getFavoriteMovies: async (_: unknown, __: unknown, ctx: Context) => {
+      // If user is not authenticated via context
+      if (!ctx.user) {
+        throw new GraphQLError('User not authenticated!');
+      }
 
-        return await Favorite.find({ userId });
-      } catch (error) {
-        if (error instanceof Error) {
-          throw new GraphQLError(error.message);
-        }
-        throw new GraphQLError('An error occurred');
+      // Use ctx.user.id (the id created by createContext)
+      const userId = ctx.user.id;
+      try {
+        //Returns Favorite documents for this user
+        return await Favorite.find({ userId }).sort({ createdAt: -1 }).exec();
+      } catch (error: any) {
+        throw new GraphQLError(error.message || 'Failed to fetch favorite movies!');
       }
     },
   },
@@ -43,65 +40,59 @@ const favoriteMoviesResolvers = {
     addFavoriteMovie: async (
       _: unknown,
       { movieInput }: { movieInput: MovieInput },
-      { token }: Context
+      ctx: Context
     ) => {
+      // If user is not authenticated via context
+      if (!ctx.user) {
+        throw new GraphQLError('User not authenticated!');
+      }
+
+      const userId = ctx.user.id;
+
       try {
-        const decoded = token ? (verifyToken(token) as JwtPayload) : null;
-        if (!decoded) {
-          throw new GraphQLError('User not authenticated');
-        }
+        const { title, year, genre, type, actors, duration, poster, movieId } = movieInput;
 
-        const { title, year, poster, movieId } = movieInput;
-
-        const existingFavorite = await Favorite.findOne({
-          userId: decoded.id,
-          movieId,
-        });
+        const existingFavorite = await Favorite.findOne({ userId, movieId }).exec();
 
         if (existingFavorite) {
-          throw new GraphQLError('Movie already in favorites');
+          throw new GraphQLError('Movie already in favorites!');
         }
 
         const favorite = new Favorite({
-          userId: decoded.id,
+          userId,
           title,
           year,
+          actors,
+          genre,
+          type,
+          duration,
           poster,
           movieId,
         });
 
         return await favorite.save();
-      } catch (error) {
-        if (error instanceof Error) {
-          throw new GraphQLError(error.message);
-        }
-        throw new GraphQLError('An error occurred');
+      } catch (error: any) {
+        throw new GraphQLError(error.message || 'Failed to add favorite movie!');
       }
     },
 
     //REMOVE FAVORITE MOVIE
-    removeFavoriteMovie: async (
-      _: unknown,
-      { movieId }: { movieId: string },
-      { token }: Context
-    ) => {
-      try {
-        const decoded = token ? (verifyToken(token) as JwtPayload) : null;
-        if (!decoded) {
-          throw new GraphQLError('User not authenticated');
-        }
+    removeFavoriteMovie: async (_: unknown, { movieId }: { movieId: string }, ctx: Context) => {
+      // If user is not authenticated via context
+      if (!ctx.user) {
+        throw new GraphQLError('User not authenticated');
+      }
+      const userId = ctx.user.id;
 
+      try {
         const result = await Favorite.deleteOne({
-          userId: decoded.id,
+          userId,
           movieId,
-        });
+        }).exec();
 
         return result.deletedCount > 0;
-      } catch (error) {
-        if (error instanceof Error) {
-          throw new GraphQLError(error.message);
-        }
-        throw new GraphQLError('An error occurred');
+      } catch (error: any) {
+        throw new GraphQLError(error.message || 'Failed to remove favorite movie!');
       }
     },
   },

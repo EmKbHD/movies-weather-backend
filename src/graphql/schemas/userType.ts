@@ -42,8 +42,8 @@ export const userType = `
   }
 
   type AuthPayload {
-    user: User!
     token: String!
+    user: User!
   }
 
   type SuccessResponse {

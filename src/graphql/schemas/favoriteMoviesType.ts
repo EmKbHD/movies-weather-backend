@@ -1,21 +1,34 @@
 export const favoriteMoviesType = `
+
+# FavoriteMovie is the stored favorite document
+
   type FavoriteMovie {
     id: ID!
     userId: ID!
     movieId: String!
     title: String!
     year: String!
+    actors: String!
+    genre: String!
+    type: String!
+    duration: String!
     poster: String!
     createdAt: String!
     updatedAt: String!
   }
 
   type Query {
-    getFavoriteMovies(email: String!): [FavoriteMovie!]!
+  # Returns the authenticated user's favorites (no args required)
+    getFavoriteMovies: [FavoriteMovie!]!
   }
 
   type Mutation {
-    addFavoriteMovie(email:String!, movieId: String!): User!
-    removeFavoriteMovie(email:String!, movieId: String!): User!
+    # Add the provided movie to the authenticated user's favorites
+
+    addFavoriteMovie(movie:MovieInput!): FavoriteMovie!
+
+    # Remove a favorite movie of the authenticated user by movieId
+
+    removeFavoriteMovie(movieId: String!): Boolean!
   }
 `;

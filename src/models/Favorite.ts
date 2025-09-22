@@ -2,24 +2,16 @@ import mongoose, { Types } from 'mongoose';
 
 const { Schema, model } = mongoose;
 
-export interface IFavorite extends Document {
-  title: string;
-  year: string;
-  poster: string;
-  userId: Types.ObjectId;
-  movieId: string;
-}
-
-const favoriteSchema = new Schema<IFavorite>(
+const favoriteSchema = new Schema(
   {
-    title: { type: String, required: true },
-    year: { type: String, required: true },
-    poster: { type: String, required: true },
     userId: { type: Schema.Types.ObjectId, ref: 'user', required: true },
-    movieId: { type: String, ref: 'movieId', required: true },
+    movie: { type: Schema.Types.ObjectId, ref: 'Movie', required: true },
   },
   { timestamps: true }
 );
 
-const Favorite = model<IFavorite>('favorite', favoriteSchema);
+// Create a compound index to ensure a user cannot favorite the same movie multiple times
+favoriteSchema.index({ userId: 1, movie: 1 }, { unique: true });
+
+const Favorite = model('favorite', favoriteSchema);
 export default Favorite;

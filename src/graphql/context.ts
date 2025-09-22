@@ -1,4 +1,4 @@
-import User, { IUser } from '../models/User.js';
+import User from '../models/User.js';
 import { verifyToken } from '../services/authServices.js';
 import { YogaInitialContext } from 'graphql-yoga';
 import { JwtPayload } from 'jsonwebtoken';

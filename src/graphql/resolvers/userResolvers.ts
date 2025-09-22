@@ -138,7 +138,7 @@ export default {
   AuthPayload: {
     user: async (parent: any) => {
       if (!parent) return null;
-      // parent.user might be: a string id, a plain object, or a Mongoose doc
+      // The parent.user might be: a string id, a plain object, or a Mongoose doc
       if (typeof parent.user === 'string') return User.findById(parent.user).exec();
       if (parent.user && parent.user.id) return parent.user;
       if (parent.id) return User.findById(parent.id).exec();

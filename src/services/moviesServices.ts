@@ -12,7 +12,9 @@ interface OMDBMovie {
   Year: string;
   Poster: string;
   Actors?: string;
-  Genre?: string;
+  Genre?: string; // movie genre, e.g. "Action, Adventure, Sci-Fi"
+  Runtime?: string; // movie duration, e.g. "142 min"
+  Type?: string; // movie format/type, e.g. "movie" | "series" | "episode"
 }
 
 interface OMDBSearchResponse {
@@ -33,6 +35,8 @@ const formatMovie = (movie: OMDBMovie) => ({
   poster: movie.Poster === 'N/A' ? null : movie.Poster,
   actors: movie.Actors,
   genre: movie.Genre,
+  duration: movie.Runtime ?? null,
+  format: movie.Type ?? null,
   externalId: movie.imdbID,
 });
 
@@ -46,7 +50,7 @@ export const searchMovies = async (query: string, page: number = 1) => {
 
     const response = await fetch(url);
     if (!response.ok) {
-      throw new Error('Failed to fetch movies..');
+      throw new Error('Failed to fetch movies!');
     }
 
     const data: OMDBSearchResponse = await response.json();
@@ -64,6 +68,6 @@ export const searchMovies = async (query: string, page: number = 1) => {
     };
   } catch (error) {
     console.error('Error searching movies:', error);
-    throw new Error('Failed to search movies');
+    throw new Error('Failed to search movies!');
   }
 };
