@@ -6,26 +6,11 @@ export const movieType = `
     id: ID!
     title: String!
     year: String!
-    actors: String
     poster: String!
-    genre: String
     type: String
-    duration: String
     externalId: String!
   }
 
-  # Reusable input for sending movie data to mutations
-
-  input MovieInput {
-    title: String!
-    year: String!
-    actors: String
-    poster: String!
-    genre: String
-    type: String
-    duration: String
-    externalId: String!
-  }
 
   type MovieSearchResult {
     movies: [Movie!]!

@@ -7,7 +7,7 @@ export interface IUser extends Document {
   lastName: string;
   email: string;
   password: string;
-  city?: string;
+  city: string;
   createdAt: Date;
   updatedAt: Date;
   // list of favorite movie IDs

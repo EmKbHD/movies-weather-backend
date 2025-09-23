@@ -6,7 +6,7 @@ import { JwtPayload } from 'jsonwebtoken';
 export interface GQLContext {
   request: YogaInitialContext['request'];
   // keep user small: only fields resolvers usually need
-  user?: { id: string; email: string };
+  user?: { id: string; city: string; email: string };
   token?: string;
 }
 
@@ -37,7 +37,7 @@ export const createContext = async (context: YogaInitialContext): Promise<GQLCon
     }
 
     // Ensure id is a string (ObjectId -> string)
-    const user = { id: userDoc._id.toString(), email: userDoc.email };
+    const user = { id: userDoc._id.toString(), city: userDoc.city, email: userDoc.email };
 
     return {
       request: context.request,

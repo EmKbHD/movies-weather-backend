@@ -1,16 +1,7 @@
 import Favorite from '../../models/Favorite.js';
 import { GraphQLError } from 'graphql';
 import { GQLContext as Context } from '../context.js';
-interface MovieInput {
-  title: string;
-  year: string;
-  actors: string;
-  genre: string;
-  type: string;
-  duration: string;
-  poster: string;
-  movieId: string;
-}
+import { upsertMovie } from '../../services/moviesServices.js';
 
 const favoriteMoviesResolvers = {
   //QUERIES START HERE
@@ -37,11 +28,7 @@ const favoriteMoviesResolvers = {
 
   Mutation: {
     //ADD FAVORITE MOVIE
-    addFavoriteMovie: async (
-      _: unknown,
-      { movieInput }: { movieInput: MovieInput },
-      ctx: Context
-    ) => {
+    addFavoriteMovie: async (_: unknown, { externalId }: { externalId: string }, ctx: Context) => {
       // If user is not authenticated via context
       if (!ctx.user) {
         throw new GraphQLError('User not authenticated!');
@@ -50,27 +37,16 @@ const favoriteMoviesResolvers = {
       const userId = ctx.user.id;
 
       try {
-        const { title, year, genre, type, actors, duration, poster, movieId } = movieInput;
-
-        const existingFavorite = await Favorite.findOne({ userId, movieId }).exec();
+        const insertAndUpdate = upsertMovie(externalId);
+        const existingFavorite = await Favorite.findOneAndUpdate(
+          { userId, externalId },
+          { $setOnInsert: { userId, movie: (await insertAndUpdate).id } },
+          { upsert: true }
+        ).exec();
 
         if (existingFavorite) {
           throw new GraphQLError('Movie already in favorites!');
         }
-
-        const favorite = new Favorite({
-          userId,
-          title,
-          year,
-          actors,
-          genre,
-          type,
-          duration,
-          poster,
-          movieId,
-        });
-
-        return await favorite.save();
       } catch (error: any) {
         throw new GraphQLError(error.message || 'Failed to add favorite movie!');
       }

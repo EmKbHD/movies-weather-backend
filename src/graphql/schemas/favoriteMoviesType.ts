@@ -5,14 +5,7 @@ export const favoriteMoviesType = `
   type FavoriteMovie {
     id: ID!
     userId: ID!
-    movieId: String!
-    title: String!
-    year: String!
-    actors: String!
-    genre: String!
-    type: String!
-    duration: String!
-    poster: String!
+    movie: Movie!
     createdAt: String!
     updatedAt: String!
   }
@@ -25,10 +18,10 @@ export const favoriteMoviesType = `
   type Mutation {
     # Add the provided movie to the authenticated user's favorites
 
-    addFavoriteMovie(movie:MovieInput!): FavoriteMovie!
+    addFavoriteMovie(externalID:String!): FavoriteMovie!
 
     # Remove a favorite movie of the authenticated user by movieId
 
-    removeFavoriteMovie(movieId: String!): Boolean!
+    removeFavoriteMovie(userId:ID, movieId: String!): Boolean!
   }
 `;

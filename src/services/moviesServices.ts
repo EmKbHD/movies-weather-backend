@@ -1,4 +1,5 @@
 import { OMDB_API_KEY } from '../config/env.js';
+import Movie from '../models/Movie.js';
 
 if (!OMDB_API_KEY) {
   throw new Error('OMDB_API_KEY must be set in environment variables');
@@ -11,9 +12,6 @@ interface OMDBMovie {
   Title: string;
   Year: string;
   Poster: string;
-  Actors?: string;
-  Genre?: string; // movie genre, e.g. "Action, Adventure, Sci-Fi"
-  Runtime?: string; // movie duration, e.g. "142 min"
   Type?: string; // movie format/type, e.g. "movie" | "series" | "episode"
 }
 
@@ -23,19 +21,11 @@ interface OMDBSearchResponse {
   Response: string;
 }
 
-interface OMDBDetailResponse extends OMDBMovie {
-  Response: string;
-  Error?: string;
-}
-
 const formatMovie = (movie: OMDBMovie) => ({
   id: movie.imdbID,
   title: movie.Title,
   year: movie.Year,
   poster: movie.Poster === 'N/A' ? null : movie.Poster,
-  actors: movie.Actors,
-  genre: movie.Genre,
-  duration: movie.Runtime ?? null,
   format: movie.Type ?? null,
   externalId: movie.imdbID,
 });
@@ -69,5 +59,40 @@ export const searchMovies = async (query: string, page: number = 1) => {
   } catch (error) {
     console.error('Error searching movies:', error);
     throw new Error('Failed to search movies!');
+  }
+};
+
+export const upsertMovie = async (externalId: string) => {
+  try {
+    const url = new URL(BASE_URL);
+    url.searchParams.append('apikey', OMDB_API_KEY);
+    url.searchParams.append('i', externalId);
+
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error('Failed to fetch movie details!');
+    }
+    const data: OMDBSearchResponse = await response.json();
+
+    if (data.Response === 'False') {
+      throw new Error('Movie not found!');
+    }
+
+    const movieData = await Movie.findOneAndUpdate(
+      { externalId },
+      {
+        title: data.Search[0].Title,
+        year: data.Search[0].Year,
+        poster: data.Search[0].Poster === 'N/A' ? null : data.Search[0].Poster,
+        format: data.Search[0].Type ?? null,
+        externalId: data.Search[0].imdbID,
+      },
+      { upsert: true, new: true }
+    ).exec();
+
+    return movieData;
+  } catch (error) {
+    console.error('Error upserting movie:', error);
+    throw new Error('Failed to upsert movie!');
   }
 };
