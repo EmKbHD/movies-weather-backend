@@ -1,3 +1,4 @@
+import { GraphQLError } from 'graphql';
 import { OMDB_API_KEY } from '../config/env.js';
 import Movie from '../models/Movie.js';
 
@@ -13,12 +14,8 @@ interface OMDBMovie {
   Year: string;
   Poster: string;
   Type?: string; // movie format/type, e.g. "movie" | "series" | "episode"
-}
-
-interface OMDBSearchResponse {
-  Search: OMDBMovie[];
-  totalResults: string;
-  Response: string;
+  Response?: string;
+  Error?: string;
 }
 
 const formatMovie = (movie: OMDBMovie) => ({
@@ -26,7 +23,7 @@ const formatMovie = (movie: OMDBMovie) => ({
   title: movie.Title,
   year: movie.Year,
   poster: movie.Poster === 'N/A' ? null : movie.Poster,
-  format: movie.Type ?? null,
+  type: movie.Type ?? null,
   externalId: movie.imdbID,
 });
 
@@ -38,12 +35,12 @@ export const searchMovies = async (query: string, page: number = 1) => {
     url.searchParams.append('page', page.toString());
     url.searchParams.append('type', 'movie');
 
-    const response = await fetch(url);
+    const response = await fetch(url.toString());
     if (!response.ok) {
-      throw new Error('Failed to fetch movies!');
+      throw new GraphQLError('Failed to fetch movies!');
     }
 
-    const data: OMDBSearchResponse = await response.json();
+    const data = await response.json();
 
     if (data.Response === 'False') {
       return {
@@ -54,11 +51,11 @@ export const searchMovies = async (query: string, page: number = 1) => {
 
     return {
       movies: data.Search.map(formatMovie),
-      totalResults: parseInt(data.totalResults),
+      totalResults: parseInt(data.totalResults, 10) || 0,
     };
   } catch (error) {
     console.error('Error searching movies:', error);
-    throw new Error('Failed to search movies!');
+    throw new GraphQLError('Failed to search movies!');
   }
 };
 
@@ -68,31 +65,37 @@ export const upsertMovie = async (externalId: string) => {
     url.searchParams.append('apikey', OMDB_API_KEY);
     url.searchParams.append('i', externalId);
 
-    const response = await fetch(url);
+    const response = await fetch(url.toString());
     if (!response.ok) {
-      throw new Error('Failed to fetch movie details!');
+      throw new GraphQLError('Failed to fetch movie details!');
     }
-    const data: OMDBSearchResponse = await response.json();
+    const data = await response.json();
 
+    // When fetching by 'i' OMDB returns a single movie object, not a Search array
     if (data.Response === 'False') {
-      throw new Error('Movie not found!');
+      throw new GraphQLError(data.Error || 'Movie not found!');
     }
 
-    const movieData = await Movie.findOneAndUpdate(
+    // Normalize field names to match our Movie model
+    const movieData = {
+      title: data.Title,
+      year: data.Year,
+      poster: data.Poster === 'N/A' ? null : data.Poster,
+      type: data.Type ?? null,
+      externalId: data.imdbID,
+    };
+
+    const movie = await Movie.findOneAndUpdate(
       { externalId },
       {
-        title: data.Search[0].Title,
-        year: data.Search[0].Year,
-        poster: data.Search[0].Poster === 'N/A' ? null : data.Search[0].Poster,
-        format: data.Search[0].Type ?? null,
-        externalId: data.Search[0].imdbID,
+        $set: movieData,
       },
-      { upsert: true, new: true }
+      { upsert: true, new: true, setDefaultsOnInsert: true }
     ).exec();
 
-    return movieData;
+    return movie;
   } catch (error) {
     console.error('Error upserting movie:', error);
-    throw new Error('Failed to upsert movie!');
+    throw new GraphQLError('Failed to upsert movie!');
   }
 };

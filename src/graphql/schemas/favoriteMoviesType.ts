@@ -10,18 +10,18 @@ export const favoriteMoviesType = `
     updatedAt: String!
   }
 
-  type Query {
   # Returns the authenticated user's favorites (no args required)
+
+  type Query {
     getFavoriteMovies: [FavoriteMovie!]!
   }
 
+
+  # Add the provided movie to the authenticated user's favorites
+  # Remove a favorite movie of the authenticated user by movieId
+
   type Mutation {
-    # Add the provided movie to the authenticated user's favorites
-
-    addFavoriteMovie(externalID:String!): FavoriteMovie!
-
-    # Remove a favorite movie of the authenticated user by movieId
-
-    removeFavoriteMovie(userId:ID, movieId: String!): Boolean!
+    addFavoriteMovie(externalId:String!): FavoriteMovie!
+    removeFavoriteMovie(externalId:String!): Boolean!
   }
 `;
