@@ -4,14 +4,11 @@ import { createContext } from './graphql/context.js';
 import cors from 'cors';
 import express from 'express';
 import { createSchema, createYoga } from 'graphql-yoga';
-import { PORT } from './config/env.js';
+import { FRONTEND_URL, PORT } from './config/env.js';
 import { connectDB } from './config/db.js';
 
 // create express app
 const app = express();
-
-// Parse JSON bodies
-app.use(express.json());
 
 // Defining a graphql schema (docs : https://the-guild.dev/graphql/yoga-server/docs/integrations/integration-with-express)
 const yoga = createYoga({
@@ -23,7 +20,12 @@ const yoga = createYoga({
 app.use('/graphql', yoga.requestListener);
 
 //CORS Middleware allow the frontend to call the backend
-app.use(cors());
+app.use(
+  cors({
+    origin: FRONTEND_URL, // allow frontend and Apollo Studio
+    allowedHeaders: ['Content-Type', 'Authorization'], // allow auth header
+  })
+);
 
 // connect to database
 const startServer = async () => {
