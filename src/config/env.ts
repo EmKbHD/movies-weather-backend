@@ -11,7 +11,7 @@ export const MONGODB_URI = process.env.MONGODB_URI!;
 
 // Authentication
 export const JWT_SECRET = process.env.JWT_SECRET!;
-export const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '1h';
+export const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '1d';
 
 // Email Service (SendGrid)
 export const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY!;

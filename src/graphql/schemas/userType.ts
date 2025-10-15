@@ -32,13 +32,13 @@ export const userType = `
   input UpdateProfileInput {
     firstName: String
     lastName: String
+    email: String
     city: String
-    currentPassword: String
-    newPassword: String
   }
 
-  input ResetPasswordInput {
-    email: String!
+  input UpdatePasswordInput {
+    currentPassword:String!
+    newPassword:String!
   }
 
   type AuthPayload {
@@ -56,8 +56,6 @@ export const userType = `
     login(input: LogInInput!): AuthPayload!
     logout: Boolean!
     updateProfile(input: UpdateProfileInput!): User!
-    resetPassword(input: ResetPasswordInput!): SuccessResponse!
-    verifyResetToken(token: String!): Boolean!
-    updatePassword(token: String!, newPassword: String!): SuccessResponse!
+    updatePassword(input: UpdatePasswordInput!): SuccessResponse!
   }
 `;

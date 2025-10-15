@@ -2,7 +2,7 @@ import bcrypt from 'bcryptjs';
 import { GraphQLError } from 'graphql';
 import User, { IUser } from '../../models/User.js';
 import Movie from '../../models/Movie.js';
-import { generateToken } from '../../services/authServices.js';
+import { generateToken, verifyToken } from '../../services/authServices.js';
 import { GQLContext } from '../context.js';
 
 // Input types
@@ -123,6 +123,110 @@ export default {
       // If you were using cookies you'd clear them here.
       // For bearer tokens the client simply discards the token.
       return true;
+    },
+
+    // Update Profile info
+
+    /**
+     * updateProfile(input: UpdateProfileInput!): User!
+     * - Uses upsert
+     * - If email changes: enforce uniqueness and bump tokenVersion to force re-login
+     */
+
+    updateProfile: async (
+      _: unknown,
+      { input }: { input: Partial<Pick<IUser, 'firstName' | 'lastName' | 'email' | 'city'>> },
+      ctx: GQLContext
+    ) => {
+      if (!ctx.user) throw new GraphQLError('User not authenticated');
+
+      const { firstName, lastName, email, city } = input || {};
+      const updates: Record<string, any> = {};
+      if (typeof firstName !== 'undefined') updates.firstName = firstName;
+      if (typeof lastName !== 'undefined') updates.lastName = lastName;
+      if (typeof city !== 'undefined') updates.city = city;
+
+      try {
+        // Load current user to compare email
+        const current = await User.findById(ctx.user.id).exec();
+        if (!current) throw new GraphQLError('⚠️ User not found!');
+
+        let shouldInvalidateTokens = false;
+
+        if (typeof email !== 'undefined' && email !== current.email) {
+          // Ensure email uniqueness - The $ne operator in Mongoose (and MongoDB in general) means “not equal to.”
+          const exists = await User.findOne({ email, _id: { $ne: ctx.user.id } })
+            .lean()
+            .exec();
+          if (exists) throw new GraphQLError('⚠️ Email already in use!');
+
+          updates.email = email;
+          // “Token-based when email is updated” → force re-auth by bumping tokenVersion
+          shouldInvalidateTokens = true;
+        }
+
+        // Apply updates (upsert as requested)
+        const doc = await User.findOneAndUpdate(
+          { _id: ctx.user.id },
+          {
+            $set: updates,
+            ...(shouldInvalidateTokens ? { $inc: { tokenVersion: 1 } } : {}),
+          },
+          {
+            new: true,
+            upsert: true,
+            runValidators: true,
+            setDefaultsOnInsert: true,
+          }
+        ).exec();
+
+        if (!doc) throw new GraphQLError('⚠️ Failed to update profile!');
+
+        // NOTE : if email was changed, all existing tokens are now invalid.
+        return formatUser(doc);
+      } catch (err: any) {
+        throw new GraphQLError(err.message || '⚠️ Failed to update profile!');
+      }
+    },
+
+    // Update Password
+    /**
+     * updatePassword(token: String!, newPassword: String!): SuccessResponse!
+     * - Token-based password reset
+     * - Hash with bcrypt
+     * - Bump tokenVersion so user is disconnected and must login afresh
+     */
+
+    updatePassword: async (
+      _: unknown,
+      { input }: { input: { currentPassword: string; newPassword: string } },
+      ctx: GQLContext
+    ) => {
+      if (!ctx.user) throw new GraphQLError('User not authenticated');
+
+      const { currentPassword, newPassword } = input || {};
+      if (!currentPassword || !newPassword) throw new GraphQLError('Missing required fields');
+
+      // optional policy
+      if (newPassword.length < 8) throw new GraphQLError('Password must be at least 8 characters');
+
+      // 1️⃣ Fetch the currently logged-in user
+      const user = await User.findById(ctx.user.id).exec();
+      if (!user) throw new GraphQLError('User not found');
+
+      // 2️⃣ Compare the provided current password with the stored hashed password
+      const ok = await bcrypt.compare(currentPassword, user.password);
+      if (!ok) throw new GraphQLError('Current password is incorrect');
+
+      // 3️⃣ Prevent reusing the same password
+      const sameAsOld = await bcrypt.compare(newPassword, user.password);
+      if (sameAsOld) throw new GraphQLError('New password must be different from the old password');
+
+      // 4️⃣ Hash and save the new password
+      user.password = await bcrypt.hash(newPassword, 12);
+      await user.save();
+
+      return { success: true, message: 'Password updated successfully' };
     },
   },
 

@@ -18,11 +18,13 @@ interface OMDBMovie {
   Error?: string;
 }
 
+const DEFAULT_POSTER = 'https://via.placeholder.com/300x450?text=No+Poster+Available';
+
 const formatMovie = (movie: OMDBMovie) => ({
   id: movie.imdbID,
   title: movie.Title,
   year: movie.Year,
-  poster: movie.Poster === 'N/A' ? null : movie.Poster,
+  poster: movie.Poster === 'N/A' ? DEFAULT_POSTER : movie.Poster,
   type: movie.Type ?? null,
   externalId: movie.imdbID,
 });
@@ -80,7 +82,7 @@ export const upsertMovie = async (externalId: string) => {
     const movieData = {
       title: data.Title,
       year: data.Year,
-      poster: data.Poster === 'N/A' ? null : data.Poster,
+      poster: data.Poster === 'N/A' ? DEFAULT_POSTER : data.Poster,
       type: data.Type ?? null,
       externalId: data.imdbID,
     };

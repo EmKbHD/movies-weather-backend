@@ -1,6 +1,6 @@
 // src/services/authServices.ts
-import jwt, { Secret, SignOptions } from 'jsonwebtoken';
-import { JWT_SECRET } from '../config/env.js';
+import jwt, { Secret, SignOptions, JwtPayload } from 'jsonwebtoken';
+import { JWT_EXPIRES_IN, JWT_SECRET } from '../config/env.js';
 
 // defensive check (optional but helpful)
 if (!JWT_SECRET) {
@@ -15,7 +15,7 @@ export const generateToken = (userId: string): string => {
 
   // Ensure options type matches jsonwebtoken types
   const opts: SignOptions = {
-    expiresIn: '1h',
+    expiresIn: '1d',
   };
 
   // Cast the secret to jwt.Secret to satisfy the type system
