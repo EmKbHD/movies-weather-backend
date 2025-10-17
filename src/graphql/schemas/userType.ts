@@ -39,6 +39,7 @@ export const userType = `
   input UpdatePasswordInput {
     currentPassword:String!
     newPassword:String!
+    confirmNewPassword:String!
   }
 
   type AuthPayload {

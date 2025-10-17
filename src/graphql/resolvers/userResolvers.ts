@@ -19,6 +19,18 @@ type LoginInput = {
   password: string;
 };
 
+type PasswordInput = {
+  currentPassword: string;
+  newPassword: string;
+  confirmNewPassword: string;
+};
+
+const PASSWORD_MIN = 8;
+const UPPER = /[A-Z]/;
+const LOWER = /[a-z]/;
+const DIGIT = /[0-9]/;
+const SPECIAL = /[^A-Za-z0-9]/;
+
 // Helper to format a Mongoose doc into the GraphQL User shape
 const formatUser = (doc: IUser) => ({
   id: doc._id.toString(),
@@ -192,39 +204,57 @@ export default {
     // Update Password
     /**
      * updatePassword(token: String!, newPassword: String!): SuccessResponse!
-     * - Token-based password reset
      * - Hash with bcrypt
-     * - Bump tokenVersion so user is disconnected and must login afresh
+     * - User will be disconnected and must login afresh
      */
 
-    updatePassword: async (
-      _: unknown,
-      { input }: { input: { currentPassword: string; newPassword: string } },
-      ctx: GQLContext
-    ) => {
+    updatePassword: async (_: unknown, { input }: { input: PasswordInput }, ctx: GQLContext) => {
       if (!ctx.user) throw new GraphQLError('User not authenticated');
 
-      const { currentPassword, newPassword } = input || {};
-      if (!currentPassword || !newPassword) throw new GraphQLError('Missing required fields');
+      const { currentPassword, newPassword, confirmNewPassword } = input || {};
+      if (!currentPassword || !newPassword || !confirmNewPassword) {
+        throw new GraphQLError('Missing required fields');
+      }
 
-      // optional policy
-      if (newPassword.length < 8) throw new GraphQLError('Password must be at least 8 characters');
+      // 0️⃣ confirm match (defense-in-depth; already validated on client)
+      if (newPassword !== confirmNewPassword) {
+        throw new GraphQLError('Passwords must match');
+      }
 
-      // 1️⃣ Fetch the currently logged-in user
+      // 🔐 password policy (align with your Yup schema)
+      if (newPassword.length < PASSWORD_MIN) {
+        throw new GraphQLError(`Password must be at least ${PASSWORD_MIN} characters`);
+      }
+      if (!UPPER.test(newPassword))
+        throw new GraphQLError('Password must contain at least one uppercase letter');
+      if (!LOWER.test(newPassword))
+        throw new GraphQLError('Password must contain at least one lowercase letter');
+      if (!DIGIT.test(newPassword))
+        throw new GraphQLError('Password must contain at least one number');
+      if (!SPECIAL.test(newPassword))
+        throw new GraphQLError('Password must contain at least one special character');
+
+      // 1️⃣ Fetch user
       const user = await User.findById(ctx.user.id).exec();
       if (!user) throw new GraphQLError('User not found');
 
-      // 2️⃣ Compare the provided current password with the stored hashed password
+      // 2️⃣ Verify current password
       const ok = await bcrypt.compare(currentPassword, user.password);
       if (!ok) throw new GraphQLError('Current password is incorrect');
 
-      // 3️⃣ Prevent reusing the same password
+      // 3️⃣ Prevent reuse (same as old)
       const sameAsOld = await bcrypt.compare(newPassword, user.password);
       if (sameAsOld) throw new GraphQLError('New password must be different from the old password');
 
-      // 4️⃣ Hash and save the new password
+      // 4️⃣ Hash + save
       user.password = await bcrypt.hash(newPassword, 12);
+
+      // Optional but recommended for token/session invalidation:
+      (user as any).passwordChangedAt = new Date();
       await user.save();
+
+      // If you use refresh tokens or JWT versioning, bump/invalidate here:
+      // user.tokenVersion += 1; await user.save();
 
       return { success: true, message: 'Password updated successfully' };
     },
