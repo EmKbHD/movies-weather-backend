@@ -19,7 +19,7 @@ type LoginInput = {
   password: string;
 };
 
-type PasswordInput = {
+type UpdatePasswordInput = {
   currentPassword: string;
   newPassword: string;
   confirmNewPassword: string;
@@ -208,7 +208,11 @@ export default {
      * - User will be disconnected and must login afresh
      */
 
-    updatePassword: async (_: unknown, { input }: { input: PasswordInput }, ctx: GQLContext) => {
+    updatePassword: async (
+      _: unknown,
+      { input }: { input: UpdatePasswordInput },
+      ctx: GQLContext
+    ) => {
       if (!ctx.user) throw new GraphQLError('User not authenticated');
 
       const { currentPassword, newPassword, confirmNewPassword } = input || {};
