@@ -23,7 +23,14 @@ app.use('/graphql', yoga.requestListener);
 app.use(
   cors({
     origin: FRONTEND_URL, // allow frontend and Apollo Studio
-    allowedHeaders: ['Content-Type', 'Authorization'], // allow auth header
+    allowedHeaders: [
+      'Content-Type',
+      'Authorization',
+      'apollo-require-preflight', // Required for Apollo Client
+      'x-apollo-operation-name',
+      'x-apollo-operation-type',
+    ], // allow auth header
+    methods: ['GET', 'POST', 'OPTIONS'], // Explicitly allow methods
   })
 );
 
